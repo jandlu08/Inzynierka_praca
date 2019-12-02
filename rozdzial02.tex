@@ -1,0 +1,141 @@
+\chapter{Przegląd i analiza istniejących rozwiązań}
+\label{chap:technologies}
+W poniższym rozdziale zostały przedstawione wykorzystane technologie. Zostały one dobrane w taki sposób, aby ułatwić stworzenie funkcjonalnej i łatwo rozszerzalnej aplikacji przeglądarkowej.
+\section{GraphQL}
+
+GraphQL jest otwartym standardem języka kwerendowego przeznaczonym do budowania API dla różnorakich aplikacji. Obecnie został zaimplementowany w wielu językach\cite{gqlcode}, również w C\# oraz JavaScripcie, które będę wykorzystywane w budowaniu programu. GraphQL nie jest związany z żadną konkretną bazą danych czy rozwiązaniem do przechowywania informacji. Serwisy są tworzone poprzez definiowanie typów oraz ich pól, a następnie funkcji dla każdego pola. Jako całość tworzą schemat GraphQL. Bardzo ważne jest, aby stworzyć ją na samym początku i nie edytować jej nadto, ponieważ stanowi ona ,,kontrakt'' między frontendem, a backendem, definiując w jaki sposób klient ma dostęp do danych. Ma to duże znaczenie w większych projektach, ponieważ zespoły mogą pracować od siebie niezależnie znając strukturę danych. Przykładem typu i funkcji zwracającej przykładowy typ:
+\begin{lstlisting}[language=sh]
+type Query {
+  getUser: User
+}
+
+type User {
+  id: ID
+  name: String
+}
+\end{lstlisting}
+Kiedy serwis GraphQL jest już uruchomiony, można wysyłać do niego kwerendy do walidacji, a następnie wykonania. Komunikacja przebiega w oparciu o standard JSON. Przykładowa kwerenda może wyglądać w następujący sposób:
+\begin{lstlisting}[language=sh]
+{
+  getUser {
+    name
+  }
+}
+\end{lstlisting}
+Wywołanie jej da następujący rezultat:
+\begin{lstlisting}[language=sh]
+{
+  "getName": {
+    "name": "Johhny"
+  }
+}
+\end{lstlisting}
+W odróżnienia od szeroko stosowanej technologii REST w GraphQL wystawiany jest tylko jeden endpoint, który odbiera wszystkie kwerendy i mutacje. Dzięki temu można definiować w bardzo elastyczny sposób dane, które chcemy pobrać i nie ma problemu sztywno określonych typów zwracanych, co może prowadzić to dostawania niewystarczającej lub za dużej ilości danych, co występuje w konkurencyjnym rozwiązaniu.
+
+\section{PostgreSQL}
+PostgreSQL jest darmową i otwarto-źródłową relacyjną bazą danych. Została stworzona do obsługiwania małego obciążenia jak i dużego oraz wielu użytkowników używającej jej współbieżnie. Jest dostępna na praktycznie większość obecnie używanych systemów (w tym np. Linux, Windows, macOS). Charakteryzuje się ona wysoką stabilnością i stosunkowo niskim wykorzystaniem zasobów. PostgreSQL oferuje wiele zaawansowanych funkcjonalności takich jak: 
+\begin{itemize}
+    \item możliwość zdefiniowania przez użytkownika typów,
+    \item dziedziczenie tabel,
+    \item bardzo dobry mechanizm blokowania danych,
+    \item integralność referencyjna kluczy obcych,
+    \item widoki,
+    \item indeksy,
+    \item funkcje,
+    \item zasady,
+    \item podkwerendy,
+    \item mechanizm kontroli współbieżności (ang. Multiversion Concurrency Control), pozwalający na jednoczesny dostęp oraz wykonywanie operacji różnym użytkownikom,
+    \item zagnieżdżone transakcje,
+    \item mechanizm asynchronicznej replikacji,
+    \item dowolna rozszerzalność, dzięki możliwości pisania wtyczek.
+\end{itemize}
+Zwłaszcza mechanizm kontroli współbieżności okazuje się bardzo przydatny w budowie aplikacji, z której będzie możliwość korzystania przez wielu użytkowników naraz, czyli np. aplikacji, którą omawia niniejsza praca. Oszczędza to wiele czasu, ponieważ nie trzeba ręcznie budować skomplikowanego systemu, który by to obsłużył albo zostawić aplikację niedopracowaną. PostgreSQL posiada również dobrą integrację z Entity Framework Core, który używany jest do zarządzania bazą danych w projekcie.
+
+\section{ASP .NET Core}
+ASP .NET Core jest międzyplatformową, wydajną, otwarto-źródłową platformą programistyczną wykorzystywaną do budowania nowoczesnych aplikacji internetowych oraz API. Wykorzystuje on wzorzec projektowy MVC (ang. Model-View-Controller), który pozwala na usystematyzowanie i oddzielenie części składowych aplikacji, co oprócz zwiększania czytelności kodu oraz modularności programu, pozwala na uporządkowane testowanie. Framework wykorzystuje również Razor Pages, które pozwalają na tworzenie interfejsu użytkownika, ale z powodzeniem można to zastąpić innymi technologiami frontendowymi takimi jak:
+\begin{itemize}
+    \item Angular,
+    \item React,
+    \item Bootstrap.
+\end{itemize}
+ASP .NET Core posiada wiele cech, które wyróżniają go na tle innych rozwiązań, a są nimi:
+\begin{itemize}
+    \item ciągła kompilacja, czyli brak konieczności rekompilowania całego projektu po dokonaniu jakiejkolwiek zmiany,
+    \item modularna budowa, dzięki bibliotekom, których instalacja jest prosta dzięki menadżerowi pakietów NuGet,
+    \item cykl działania programu zoptymalizowany pod użycie w chmurze,
+    \item łatwa konfiguracja uruchomieniowa w chmurze,
+    \item lekki i modularny potok żądań HTTP,
+    \item możliwość działania na systemach Windows, Linux oraz Mac,
+    \item otwarto-źródłowa,
+    \item skupiony na społeczności,
+    \item wbudowany mechanizm wstrzykiwania zależności,
+    \item mechanizmy automatycznej walidacji po stronie klienta oraz serwera.
+\end{itemize}
+W projekcie inżynierskim został on wykorzystany w formie backendu. Dzięki gotowym bibliotekom implementującym standard GraphQL, Identity Core oraz biblioteką Entity Framework Core wraz z dodatkiem do obsługi bazy danych PostgreSQL pełni kilka kluczowych funkcji:
+\begin{itemize}
+    \item wystawienie endpointu dla frontendu,
+    \item operacje związane z komunikacją z bazą danych (pobieranie, dodawanie, edycja, usuwanie),
+    \item definicja struktury bazy danych (podejście Code First, czyli generowanie tabel i relacji bazy danych na podstawie kodu),
+    \item definicja schematu (typy, kwerendy, mutacje) GraphQL,
+    \item obliczenia,
+    \item walidacje,
+    \item filtrowania,
+    \item zarządzanie użytkownikami (rejestracja, logowanie).
+\end{itemize}
+
+\subsection{Entity Framework Core}
+Jest to biblioteka, która służy do obsługi różnych baz danych w tym PostgreSQL. Entity Framework Core służy również do mapowania obiektowo-relacyjnego, która pozwala na odwzorowanie struktury obiektowej programu na relacyjną bazę danych.\cite{efcore} Podejście takie pozwala na bezpośrednie odwoływanie się do bazy danych przez obiekty, nie ma potrzeby pisania skomplikowanych kwerend SQL-owych. Aby dokonać mapowania niezbędne jest utworzenie modelów wszystkich obiektów. Na przykład w poniższy sposób:
+\begin{lstlisting}[language={[Sharp]C}]
+public class Blog
+    {
+        public int BlogId { get; set; }
+        public string Url { get; set; }
+        public int Rating { get; set; }
+        public List<Post> Posts { get; set; }
+    }
+
+    public class Post
+    {
+        public int PostId { get; set; }
+        public string Title { get; set; }
+        public string Content { get; set; }
+
+        public int BlogId { get; set; }
+        public Blog Blog { get; set; }
+    }
+\end{lstlisting}
+Dzięki językowi LINQ można w łatwy i w o wiele bardziej czytelny niż standardowy język SQL, wykonywać kwerendy. Na przykład w taki sposób:
+\begin{lstlisting}[language={[Sharp]C}]
+   using (var db = new BloggingContext())
+{
+    var blogs = db.Blogs
+        .Where(b => b.Rating > 3)
+        .OrderBy(b => b.Url)
+        .ToList();
+}
+\end{lstlisting}
+Zapisywanie danych również jest bajecznie proste, wystarczy stworzyć nowy obiekt, dodać go do odpowiedniej tabeli i wykonać metodę \texttt{SaveChanges()}:
+\begin{lstlisting}[language={[Sharp]C}]
+using (var db = new BloggingContext())
+{
+    var blog = new Blog { Url = "http://sample.com" };
+    db.Blogs.Add(blog);
+    db.SaveChanges();
+}
+\end{lstlisting}
+
+\subsection{Identity Core}
+Jest to biblioteka obsługująca system zarządzania tożsamością. Główna funkcjonalność obejmuje:
+\begin{itemize}
+    \item integracja z relacyjną bazą danych lub z Azure Table Storage w celu przechowywania danych użytkownika,
+    \item zarejestrowanie nowego użytkownika i dodanie go do bazy,
+    \item wspieranie logowania się poprzez konta Facebook, Google, Microsoft oraz Twitter,
+    \item uwierzytelnianie oraz autoryzacja,
+    \item obsługa OpenID Connect oraz OAuth 2.0,
+    \item gotowy interfejs graficzny użytkownika.
+\end{itemize}
+
+\section{Angular}
+Jest platformą programistyczną wykorzystywaną do budowania klientów aplikacji w HTML oraz TypeScript.\cite{angulararch} Angular sam w sobie został napisany w języku TypeScript, dzięki temu zawiera wszystkie jego funkcjonalności i biblioteki. Podstawowym elementem, z którego budowana jest aplikacja w Angularze, jest \textit{NgModule}. Zawiera ona w sobie komponenty. Aplikacja musi zawierać co najmniej jeden taki moduł. Jednak lepszym rozwiązaniem jest zaprojektowanie wiele takich modułów, ponieważ ułatwiają one organizację oraz rozbudowę. Komponenty zaś definiują widoki, które są zbiorem elementów, które Angular może wybierać i modyfikować na podstawie danych oraz logiki programu. Serwisy są używane przez komponenty w przypadkach, kiedy jakaś funkcjonalność nie jest powiązana konkretnie z jednym widokiem i może być użyta równie dobrze w jakimś innym. Dostarczane one są poprzez wstrzykiwanie zależności. Zarówno komponenty jak i serwisy są zwykłymi klasami z dekoratorami, które oznaczają ich typ oraz zapewniają odpowiednie metadane dzięki którym Angular wie jak je wykorzystać. Metadane komponentu powiązane są z szablonem, który definiuje widok, w którego skład wchodzi zwykły HTML z Angularowymi dyrektywami oraz znacznikami wiążącymi, które pozwalają na edycję danych przed ich wyświetleniem. Metadane serwisu dostarczają Angularowi informacje, które pozwalają serwisowi na stanie się dostępnym dla komponentów poprzez mechanizm wstrzykiwania zależności. Komponenty powinny definiować wiele widoków w sposób hierarchiczny. Angular dostarcza serwis \textit{Router}, który pozwala na prostą nawigację między widokami poprzez URL. Dodatkowo pozwala na przekazywanie w URL-u danych, takich jak na przykład numer identyfikacyjny jakiegoś obiektu.
+
+Aplikacja wykorzystuje klienta Apollo do integracji z GraphQL. Pozwala on na generacje wszystkich potrzebnych typów, kwerend, mutacji ze schematu. Dzięki temu można w prosty sposób korzystać z API.
