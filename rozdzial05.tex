@@ -269,7 +269,7 @@ Do połączenia został wykorzystany klient Apollo. Jest to niezwykle elastyczny
 \begin{itemize}
     \item przystosowalność -- można wykorzystać go w istniejącej aplikacji,
     \item uniwersalność -- jest kompatybilny z dowolną konfiguracją, dowolnym serwerem lub schematem GraphQL,
-    \item nieskomplikowanie -- w łatwy sposób można pobrać dane, a wykorzystaniem dodatkowej, bardziej zaawansowanej funkcjonalności zostawić sobie na później,
+    \item niski poziom skomplikowania -- w łatwy sposób można pobrać dane, a wykorzystaniem dodatkowej, bardziej zaawansowanej funkcjonalności zostawić sobie na później,
     \item zrozumiały i łatwy do sprawdzania,
     \item mały i elastycznym -- nie potrzebuje wielu zasobów do poprawnego działania, a jego rdzeń został skompresowany do rozmiaru poniżej 12 KB,
     \item otwarto-źródłowy -- rozbudowana społeczność trwa o rozwój biblioteki.
@@ -348,5 +348,235 @@ Następnym krokiem było pobranie danych, co zostało zobrazowane w poniższej m
   }
   \end{lstlisting}
   Do zmiennej \texttt{loading} zapisywany jest stan ładowania. Jest on konieczny do wizualizacji procesu pobierania danych. A wszystkie dane dotyczące przepisu przekazywane są do zmiennej \texttt{recipe}, z której później można się bezpośrednio odwoływać w szablonie.
-  \subsection{Modyfikacja dancyh}
-  Odbywa się w bardzo podobny sposób, co pobieranie danych, schemat praktycznie jest ten sam. Na początku należy napisać mutację, należ
+  \subsection{Modyfikacja danych}
+  Odbywa się w bardzo podobny sposób, co pobieranie danych, schemat praktycznie jest ten sam. Na początku należy napisać mutację. Trzeba pamiętać też o tym, że mutacje muszą zwracać jakieś dane. Poniżej przedstawione zostało jako przykład dodawanie komentarza.
+  \begin{lstlisting}
+  mutation addComment($authorUserId: ID!, $recipeId: ID!, 
+  $comment: AddCommentInput!){
+  addComment(recipeId: $recipeId, authorUserId: $authorUserId,
+  comment: $comment){
+    commentId
+    }
+  }
+  \end{lstlisting}
+  Jak widać przekazywane są niezbędne informacje, a zwracany jest numer identyfikacyjny nowo dodanego komentarza.\\
+  Poniżej przedstawiono metodę odpowiedzialną za dodanie nowego komentarza.
+  \begin{lstlisting}[language=JavaScript]
+   addComment() {
+    this.subscription.add(this.addCommentGQL
+      .mutate({authorUserId: this.input.authorUserId,
+      recipeId: this.input.recipeId, comment: this.comment})
+      .subscribe(result => {
+        if (result == null) {
+          this.snackBar.open('Can\'t add comment!',
+            'OK', {duration: 3000});
+        } else {
+          this.dialogRef.close({data: true});
+        }
+      }))
+      }
+    }
+  \end{lstlisting}
+  Jeśli otrzymano numer identyfikacyjny nowo dodanego komentarza to okno dialogowe jest zamykane, a komentarz będzie widoczny. Natomiast jeśli dodawanie się nie powiedzie to zostanie wyświetlony stosowny komunikat.
+  \subsection{Style}
+  Do napisania styli aplikacji wykorzystana została zamiast zwykłego CSS składnia SCSS. Jest ona kompilowana do standardowego języka CSS, aby przeglądarki mogły normalnie wyrenderować obraz, ponieważ nie obsługują jeszcze bezpośrednio innych standardów.\cite{scss} Różni się głównie tym, że:
+  \begin{itemize}
+      \item można zagnieżdżać reguły,
+      \item bardziej zaawansowane zmienne -- można je iterować, generować wartości oraz właściwości dynamicznie,
+      \item operatory -- można dodawać, odejmować, pomnażać i dzielić wartości CSS,
+      \item można tworzyć funkcje wielokrotnego użytku,
+      \item operacje trygonometryczne.
+  \end{itemize}
+  Jak widać daje to dużą dowolność i pozwala tworzyć konstrukcje, które normalnie w zwykłym CSS nie byłyby możliwe.\\
+  Poniżej przedstawiono przykładowy styl.
+  \begin{lstlisting}
+app-user-info {
+  .mat-card-subtitle {
+    margin-bottom: 4px;
+  }
+
+  .mat-card-content {
+    margin-bottom: 14px;
+  }
+
+  .mat-card {
+    margin-top: 20px;
+    margin-left: 20px;
+    height: 600px;
+  }
+
+  .user-info-card {
+    width: 15%;
+  }
+
+  .card-container {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .recipes-list-placeholder {
+    width: 75%;
+  }
+}
+  \end{lstlisting}
+  Aplikacja korzysta z Material Theme, więc nie było potrzeby tworzenia skomplikowanych styli, aby zachować jednolity i estetyczny interfejs graficzny.
+  \subsection{Szablony}
+  Wykorzystano język HTML5 wraz z Angularowymi udogodnieniami, czyli przede wszystkim bezpośrednie pobieranie zmiennych z kodu aplikacji, pętle warunkowe, pętle iteracyjne czy też asynchroniczne pobieranie danych. Poniżej przedstawiono przykładowy szablon, który wykorzystuje z większości z tych funkcjonalności.
+  
+  \begin{lstlisting}[language=HTML5] 
+  <mat-spinner color="accent" *ngIf="loading"></mat-spinner>
+<mat-card *ngIf="!loading">
+  <div fxLayout="row wrap">
+    <mat-card *ngFor="let comment of slicedComments" 
+    class="comment">
+      <div class="row">
+        <div class="col right">
+          <mat-card-title>{{comment.author.userName}}
+          </mat-card-title>
+        </div>
+        <div class="col vote-container">
+          <div>{{comment.rating.upVotes}}</div>
+        </div>
+        <div class="col clickable" (click)=
+        "vote(commonTypes.voteTypes.up, comment)">
+          <svg-icon src="/assets/img/plus.svg"></svg-icon>
+        </div>
+        <div class="col vote-container">
+          <div>{{comment.rating.downVotes}}</div>
+        </div>
+        <div class="col clickable" 
+        (click)="vote(commonTypes.voteTypes.down, comment)">
+          <svg-icon src="/assets/img/minus.svg" ></svg-icon>
+        </div>
+      </div>
+      <mat-card-content>{{comment.content}}
+      </mat-card-content>
+      <mat-card-footer>{{comment.publicationDate}}
+      </mat-card-footer>
+    </mat-card>
+  </div>
+  <mat-paginator (page)="pageChangeEvent($event)"
+                 [length]="pageLength"
+                 [pageSize]="pageSize"
+                 [pageSizeOptions]="[6]">
+  </mat-paginator>
+</mat-card>
+   \end{lstlisting}
+   \texttt{*ngIf} odpowiada za stworzenie pętli warunkowej, czyli komponent wyświetli się jedynie wtedy jeśli spełniony zostanie warunek logiczny zawarty w wyrażeniu. \texttt{*ngFor} jest odpowiedzialne za wykonanie pętli for, czyli dany komponent zostanie wyświetlony dla każdego elementu zadanej kolekcji z osobna. Często wykorzystywane są bezpośrednie wywołania funkcji w szablonie. Na przykład po kliknięciu przycisku, wywoływana jest metoda odpowiedzialna za oddanie głosu. W tym przykładzie wykorzystano również Flexbox, który dynamicznie dostosowuje wyświetlany zestaw danych do wielkości okna, w którym jest wyświetlany. W tym przypadku im węższe będzie okno przeglądarki, tym mniej będzie kolumn komentarzy. Na uwagę zasługuje również wykorzystanie paginatora do czytelniejszego wyświetlania danych.
+   \subsection{Serwisy}
+   Są to klasy, które zawierają funkcje o zazwyczaj wąskim zakresie i dzięki wstrzykiwaniu zależności można ich używać między komponentami. Mogą też służyć do przechowywania wspólnych danych. Angular odróżnia komponenty od usług w celu zwiększenia modułowości i ponownego użycia.\cite{angulararch} Oddzielając funkcje związane z widokiem komponentu od innych rodzajów przetwarzania sprawia się, że komponenty są czytelniejsze i bardziej wydajne. W idealnym przypadku komponent powinien pośredniczyć wyłącznie w pobieraniu i wysyłaniu danych, a logika powinna być zawarta w serwisie. Lecz nie jest w żaden sposób wymuszone.\\
+   Poniżej przedstawiono serwis, który zarządza sesją użytkownika.
+   \begin{lstlisting}[language=JavaScript] 
+  export class UserService {
+
+  private _user: Subject<User> = new Subject<User>();
+  private _isLoggedObs: BehaviorSubject<boolean>
+  = new BehaviorSubject<boolean>(false);
+
+  readonly userObs: Observable<User>= this._user.asObservable();
+  readonly isLoggedObs: Observable<boolean>
+  = this._isLoggedObs.asObservable();
+
+  isLogged: boolean = false;
+  user: User;
+  constructor(private cookieService: CookieService) {
+  }
+  changeUser(user: User) {
+    this.isLogged = user != null;
+    this._isLoggedObs.next(this.isLogged);
+    this.cookieService.set('user', JSON.stringify(user), 7);
+    this.cookieService.set('isLogged',
+    JSON.stringify(this.isLogged), 7);
+    this._user.next(user);
+    this.user = user;
+  }
+  logout() {
+    this.changeUser(null);
+  }
+
+  getUser() {
+    return this.userObs;
+  }
+
+  getIsLogged() {
+    return this.isLoggedObs;
+  }
+  refreshCookies() {
+    this.user = JSON.parse(this.cookieService.get('user'));
+    this._user.next(this.user);
+
+    this.isLogged = JSON.parse(this.cookieService
+    .get('isLogged'));
+    this._isLoggedObs.next(this.isLogged);
+  }
+}
+  \end{lstlisting}
+  Metoda \texttt{changeUser} odpowiada za zmianę użytkownika, a informacje o obecnie zalogowanym użytkowniku są przechowywane w ciasteczku. Mechanizm ten w połączeniu ze strażnikiem pozwala na dostęp do zasobów aplikacji tylko dla zalogowanych użytkowników. Czyli posiadając ścieżkę do jakiegoś przepisu i próbując się z nią połączyć przez przeglądarkę, informacje wyświetlą się tylko jeśli ktoś jest zalogowany.
+  \subsection{Strażnicy}
+  Chronienie ścieżek jest bardzo częstym zadaniem w projektowaniu aplikacji internetowych. Należy przeciwdziałać nieupoważnionemu korzystaniu ze ścieżek osobom, które nie mają do nich dostępu. Angular ma zapewnione wbudowane rozwiązanie, a są nimi strażnicy.\cite{angulararch}\\
+  Istnieją cztery różne rodzaje strażników, a są nimi:
+  \begin{itemize}
+      \item \texttt{CanActivate} -- decyduje czy ścieżka może zostać aktywowana,
+      \item \texttt{CanActivateChild} -- decyduje czy dziecko ścieżki może zostać aktywowane,
+      \item \texttt{CanDeactivate} -- decyduje czy ścieżka może zostać dezaktywowana,
+      \item \texttt{CanLoad} -- decyduje czy moduł może zostać leniwie załadowany.
+  \end{itemize}
+  Istnieje możliwość implementacji dowolnej kombinacji z wyżej wymienionych.\\
+  Jako przykład przedstawiono poniżej strażnika uwierzytelniania.
+  \begin{lstlisting}[language=JavaScript] 
+  export class AuthGuard implements CanActivate,
+  CanActivateChild, OnInit {
+
+  constructor(private userService: UserService,
+     private dietGeneratorService: DietGeneratorService) {
+  }
+
+  ngOnInit(): void {
+  }
+
+  canActivate(
+    next: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot): Observable<boolean |
+    UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
+    this.userService.refreshCookies();
+    if (this.dietGeneratorService.calories != null)
+      this.dietGeneratorService.refreshCookies();
+    return this.userService.isLogged;
+  }
+
+  canActivateChild(
+    next: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot): Observable<boolean |
+    UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
+    this.userService.refreshCookies();
+    if (this.dietGeneratorService.calories != null)
+      this.dietGeneratorService.refreshCookies();
+    return this.userService.isLogged;
+  }
+}
+  \end{lstlisting}
+  Sprawdza on wykorzystując metodę serwisu czy dany użytkownik jest rzeczywiście zalogowany.
+  \subsection{Routing}
+  W poniższym listningu zostało przedstawione jak wygląda trasowanie aplikacji w kodzie.
+  \begin{lstlisting}[language=JavaScript] 
+const routes: Routes = [
+  {path: 'login', component: LoginComponent},
+  {path: 'register', component: RegisterComponent},
+  {path: 'main', canActivate: [AuthGuard],
+    component: MainPageComponent},
+  {path: '', redirectTo: '/login', pathMatch: 'full'},
+  {path: 'user/:userId',  canActivate: [AuthGuard],
+  component: UserInfoComponent},
+  {path:'recipe/:recipeId', canActivate:[AuthGuard],
+  component:RecipeInfoComponent}
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule {
+}
+  \end{lstlisting}
+  Istnieją ścieżki do logowania, rejestracji, generowania diety oraz ścieżki szczegółów użytkownika i przepisu, które przyjmują dodatkowo parametr w postaci numeru identyfikacyjnego. Jeśli nie zostanie podana żadna ścieżka to użytkownik zostanie przekierowany do ekranu logowania. Do każdej ścieżki przypisany jest komponent, który jej odpowiada oraz strażnik, jeśli jest wymagany.\\ 
+  Oprócz wyżej wymienionych ścieżek w aplikacji występują również okna modalne. Ich uruchomienie nie wiąże się ze zmianą ścieżki. Są zazwyczaj wykorzystywane w oknach do wprowadzania danych oraz w wyświetlaniu komunikatów.
